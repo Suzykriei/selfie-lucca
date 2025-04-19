@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Safari do Lucca - Selfie</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: black;
+    }
+
+    video, canvas {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #frame {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .buttons {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+
+    button {
+      font-size: 16px;
+      padding: 10px 20px;
+      margin: 0 10px;
+      border: none;
+      border-radius: 8px;
+      background-color: #ffc107;
+      color: #000;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #ff9800;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <video id="video" autoplay playsinline></video>
+    <img id="frame" src="moldura.png" alt="Moldura da Festa">
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <div class="buttons">
+      <button id="capture">Tirar Foto</button>
+      <button id="share" style="display: none;">Compartilhar</button>
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureButton = document.getElementById('capture');
+    const shareButton = document.getElementById('share');
+    const frame = document.getElementById('frame');
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+      .then(stream => {
+        video.srcObject = stream;
+      });
+
+    captureButton.onclick = () => {
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      context.drawImage(frame, 0, 0, canvas.width, canvas.height); // adiciona moldura
+
+      const image = canvas.toDataURL('image/png');
+
+      // Compartilhar ou salvar
+      if (navigator.canShare && navigator.canShare({ files: [] })) {
+        shareButton.style.display = 'inline-block';
+      } else {
+        const link = document.createElement('a');
+        link.download = 'foto-safari.png';
+        link.href = image;
+        link.click();
+      }
+    };
+
+    shareButton.onclick = () => {
+      canvas.toBlob(blob => {
+        const file = new File([blob], 'foto-safari.png', { type: 'image/png' });
+        navigator.share({
+          files: [file],
+          title: 'Foto no Safari do Lucca',
+          text: 'Minha selfie na festa!',
+        });
+      });
+    };
+  </script>
+</body>
+</html>
